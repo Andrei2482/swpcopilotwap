@@ -1,194 +1,191 @@
 import { useState, type ReactNode } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Trash2, Download, Moon, Sun } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Link } from 'react-router-dom'
+import { ArrowLeft, Trash2, Download, Moon, Sun, Monitor } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select'
-import { SwordigoLogo } from '@/components/SwordigoLogo'
+import { Button } from '@/components/ui/button'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { TooltipProvider } from '@/components/ui/tooltip'
+import { useTheme } from '@/context/ThemeContext'
+import { cn } from '@/lib/utils'
 import type { AccentColor, Theme } from '@/types'
 
-/* ── Accent color definitions ─────────────────────────────────────────────── */
+/* ── Accent colour options ──────────────────────────────────────────────── */
 const ACCENT_OPTIONS: { value: AccentColor; label: string; hex: string }[] = [
-    { value: 'default', label: 'Default (Purple)', hex: '#8b5cf6' },
+    { value: 'purple', label: 'Purple', hex: '#8b5cf6' },
+    { value: 'blue', label: 'Blue', hex: '#3b82f6' },
     { value: 'green', label: 'Green', hex: '#22c55e' },
     { value: 'red', label: 'Red', hex: '#ef4444' },
-    { value: 'blue', label: 'Blue', hex: '#3b82f6' },
-    { value: 'yellow', label: 'Yellow', hex: '#eab308' },
     { value: 'pink', label: 'Pink', hex: '#ec4899' },
+    { value: 'yellow', label: 'Yellow', hex: '#eab308' },
 ]
 
-/* ── Section wrapper ─────────────────────────────────────────────────────── */
+/* ── Theme presets ──────────────────────────────────────────────────────── */
+const THEME_OPTIONS: { value: Theme; label: string; icon: typeof Moon }[] = [
+    { value: 'dark', label: 'Dark', icon: Moon },
+    { value: 'light', label: 'Light', icon: Sun },
+    { value: 'system', label: 'System', icon: Monitor },
+]
+
+/* ── Layout helpers ─────────────────────────────────────────────────────── */
 function Section({ title, children }: { title: string; children: ReactNode }) {
     return (
-        <section aria-labelledby={`sec-${title.toLowerCase().replace(/\s/g, '-')}`} className="space-y-3">
-            <h2
-                id={`sec-${title.toLowerCase().replace(/\s/g, '-')}`}
-                className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/70"
-            >
+        <section aria-labelledby={`section-${title.toLowerCase()}`} className="mb-6">
+            <h2 id={`section-${title.toLowerCase()}`}
+                className="px-1 pb-2 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/50 select-none">
                 {title}
             </h2>
-            <div className="rounded-xl border border-border bg-surface overflow-hidden divide-y divide-border">
+            <div className="rounded-2xl border border-border/50 bg-[hsl(var(--surface))] divide-y divide-border/40 overflow-hidden shadow-sm">
                 {children}
             </div>
         </section>
     )
 }
 
-/* ── Row ─────────────────────────────────────────────────────────────────── */
 function Row({ label, description, children }: { label: string; description?: string; children: ReactNode }) {
     return (
         <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3.5">
             <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-foreground leading-snug">{label}</p>
-                {description && (
-                    <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{description}</p>
-                )}
+                {description && <p className="mt-0.5 text-xs text-muted-foreground/70 leading-relaxed">{description}</p>}
             </div>
             <div className="shrink-0">{children}</div>
         </div>
     )
 }
 
-/* ── Page ─────────────────────────────────────────────────────────────────── */
+/* ── Page ───────────────────────────────────────────────────────────────── */
 export default function SettingsPage() {
-    const navigate = useNavigate()
-    const [theme, setTheme] = useState<Theme>('dark')
-    const [accent, setAccent] = useState<AccentColor>('default')
-    const [enableHistory, setEnableHistory] = useState(true)
-
-    function toggleTheme() {
-        setTheme((t) => (t === 'dark' ? 'light' : 'dark'))
-    }
+    const { theme, setTheme, accent, setAccent } = useTheme()
+    const [saveHistory, setSaveHistory] = useState(true)
 
     return (
-        <div className="min-h-dvh bg-background text-foreground flex flex-col">
-            {/* Topbar */}
-            <header className="glass-topbar flex items-center gap-3 h-14 px-4 shrink-0">
-                <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={() => navigate(-1)}
-                    aria-label="Go back"
-                >
-                    <ArrowLeft className="h-4 w-4" />
-                </Button>
-                <div className="flex items-center gap-2">
-                    <SwordigoLogo size={24} showWordmark={false} />
-                    <span className="text-sm font-semibold tracking-tight">Settings</span>
-                </div>
-            </header>
+        <TooltipProvider>
+            <div className="h-full flex flex-col overflow-hidden bg-background">
+                {/* Header */}
+                <header className="glass-topbar flex items-center gap-3 h-14 px-4 shrink-0 z-10" role="banner">
+                    <Tooltip delayDuration={300}>
+                        <TooltipTrigger asChild>
+                            <Link
+                                to="/"
+                                aria-label="Back to Copilot"
+                                className={cn(
+                                    'flex h-8 w-8 items-center justify-center rounded-xl',
+                                    'text-muted-foreground hover:text-foreground hover:bg-muted/60',
+                                    'transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary'
+                                )}
+                            >
+                                <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+                            </Link>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom">Back to Copilot</TooltipContent>
+                    </Tooltip>
+                    <h1 className="text-sm font-semibold text-foreground">Settings</h1>
+                </header>
 
-            {/* Content */}
-            <main className="flex-1 overflow-y-auto px-4 py-8 max-w-lg mx-auto w-full space-y-6 animate-fade-in">
+                <ScrollArea className="flex-1">
+                    <main className="mx-auto max-w-xl px-4 py-8" aria-label="Settings">
 
-                {/* History */}
-                <Section title="History">
-                    <Row
-                        label="Enable History"
-                        description="Save your Copilot conversations for later reference."
-                    >
-                        <Switch
-                            checked={enableHistory}
-                            onCheckedChange={setEnableHistory}
-                            aria-label="Enable history"
-                        />
-                    </Row>
-                    <Row
-                        label="Delete History"
-                        description="Permanently remove all saved conversations."
-                    >
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-destructive border-destructive/30 hover:bg-destructive/10 hover:border-destructive/60 gap-1.5"
-                            aria-label="Delete all chat history"
-                            disabled={!enableHistory}
-                        >
-                            <Trash2 className="h-3.5 w-3.5" />
-                            Delete
-                        </Button>
-                    </Row>
-                    <Row
-                        label="Export History"
-                        description="Download your conversations as a JSON file."
-                    >
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="gap-1.5"
-                            aria-label="Export chat history"
-                            disabled={!enableHistory}
-                        >
-                            <Download className="h-3.5 w-3.5" />
-                            Export
-                        </Button>
-                    </Row>
-                </Section>
+                        {/* ── Appearance ───────────────────────────────── */}
+                        <Section title="Appearance">
+                            {/* Theme */}
+                            <Row label="Theme" description="Controls the color scheme of the interface.">
+                                <div className="flex items-center gap-1 rounded-xl border border-border/50 bg-muted/30 p-1" role="radiogroup" aria-label="Theme">
+                                    {THEME_OPTIONS.map(({ value, label, icon: Icon }) => (
+                                        <button
+                                            key={value}
+                                            type="button"
+                                            role="radio"
+                                            aria-checked={theme === value}
+                                            onClick={() => setTheme(value)}
+                                            className={cn(
+                                                'flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-all duration-150',
+                                                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
+                                                theme === value
+                                                    ? 'bg-background text-foreground shadow-sm border border-border/50'
+                                                    : 'text-muted-foreground hover:text-foreground'
+                                            )}
+                                        >
+                                            <Icon className="h-3 w-3" aria-hidden="true" />
+                                            {label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </Row>
 
-                {/* Appearance */}
-                <Section title="Appearance">
-                    <Row
-                        label="Theme"
-                        description={theme === 'dark' ? 'Dark mode is active' : 'Light mode is active'}
-                    >
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={toggleTheme}
-                            className="gap-1.5 min-w-[90px]"
-                            aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-                            aria-pressed={theme === 'dark'}
-                        >
-                            {theme === 'dark'
-                                ? <><Moon className="h-3.5 w-3.5" /> Dark</>
-                                : <><Sun className="h-3.5 w-3.5" /> Light</>}
-                        </Button>
-                    </Row>
+                            {/* Accent */}
+                            <Row label="Accent Color" description="The highlight color used throughout the interface.">
+                                <div className="flex items-center gap-1.5" role="radiogroup" aria-label="Accent color">
+                                    {ACCENT_OPTIONS.map((opt) => (
+                                        <Tooltip key={opt.value} delayDuration={400}>
+                                            <TooltipTrigger asChild>
+                                                <button
+                                                    type="button"
+                                                    role="radio"
+                                                    aria-checked={accent === opt.value}
+                                                    aria-label={opt.label}
+                                                    onClick={() => setAccent(opt.value)}
+                                                    className={cn(
+                                                        'h-6 w-6 rounded-full transition-all duration-150',
+                                                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+                                                        'active:scale-90',
+                                                        accent === opt.value
+                                                            ? 'ring-2 ring-offset-2 ring-offset-background scale-110'
+                                                            : 'hover:scale-105 opacity-70 hover:opacity-100'
+                                                    )}
+                                                    style={{
+                                                        background: opt.hex,
+                                                        ['--tw-ring-color' as string]: opt.hex,
+                                                    }}
+                                                />
+                                            </TooltipTrigger>
+                                            <TooltipContent side="bottom" className="text-xs">{opt.label}</TooltipContent>
+                                        </Tooltip>
+                                    ))}
+                                </div>
+                            </Row>
+                        </Section>
 
-                    <Row
-                        label="Accent Color"
-                        description="Choose a highlight color for the interface."
-                    >
-                        <Select value={accent} onValueChange={(v: string) => setAccent(v as AccentColor)}>
-                            <SelectTrigger className="w-[150px]" aria-label="Accent color">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {ACCENT_OPTIONS.map((opt) => (
-                                    <SelectItem key={opt.value} value={opt.value}>
-                                        <span className="flex items-center gap-2">
-                                            <span
-                                                className="h-3 w-3 rounded-full shrink-0 ring-1 ring-white/10"
-                                                style={{ background: opt.hex }}
-                                                aria-hidden="true"
-                                            />
-                                            {opt.label}
-                                        </span>
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </Row>
-                </Section>
+                        {/* ── History ──────────────────────────────────── */}
+                        <Section title="History">
+                            <Row label="Save conversations" description="Your chats are stored locally in this browser.">
+                                <Switch
+                                    checked={saveHistory}
+                                    onCheckedChange={setSaveHistory}
+                                    aria-label="Save conversation history"
+                                />
+                            </Row>
+                            <Row label="Export history" description="Download all your conversations as JSON.">
+                                <Button variant="outline" size="sm" className="gap-2 h-8 text-xs" aria-label="Export history">
+                                    <Download className="h-3.5 w-3.5" aria-hidden="true" />
+                                    Export
+                                </Button>
+                            </Row>
+                            <Row label="Delete all history" description="Permanently erase all saved conversations.">
+                                <Button variant="outline" size="sm"
+                                    className="gap-2 h-8 text-xs text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+                                    aria-label="Delete all history">
+                                    <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                                    Delete all
+                                </Button>
+                            </Row>
+                        </Section>
 
-                {/* About */}
-                <Section title="About">
-                    <Row label="Version" description="SwordigoPlus Copilot">
-                        <span className="text-xs text-muted-foreground font-mono">0.1.0-beta</span>
-                    </Row>
-                </Section>
+                        {/* ── About ────────────────────────────────────── */}
+                        <Section title="About">
+                            <Row label="Version" description="SwordigoPlus Copilot">
+                                <span className="rounded-lg bg-muted/50 border border-border/40 px-2.5 py-1 text-xs text-muted-foreground font-mono">
+                                    0.1.0-beta
+                                </span>
+                            </Row>
+                            <Row label="Platform" description="Hosted on Cloudflare Pages.">
+                                <span className="text-xs text-muted-foreground/60">Cloudflare</span>
+                            </Row>
+                        </Section>
 
-                {/* Footer note */}
-                <p className="text-center text-xs text-muted-foreground/40 pb-4 select-none">
-                    Settings are stored locally and take effect immediately.
-                </p>
-            </main>
-        </div>
+                    </main>
+                </ScrollArea>
+            </div>
+        </TooltipProvider>
     )
 }

@@ -1,14 +1,24 @@
 import { useState, useRef, useCallback, type PointerEvent, type MouseEvent } from 'react'
-import { Plus, MessageSquare, Trash2, Search, GripVertical } from 'lucide-react'
+import { Plus, MessageSquare, Trash2, Search, GripVertical, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import type { Chat } from '@/types'
 
-const MIN_W = 180
-const MAX_W = 340
-const DEFAULT_W = 240
+const MIN_W = 196
+const MAX_W = 360
+const DEFAULT_W = 256
+const COLLAPSED_W = 60
 
 interface SidebarProps {
     chats: Chat[]
@@ -21,176 +31,231 @@ interface SidebarProps {
 
 export function Sidebar({ chats, activeChatId, onSelectChat, onNewChat, onDeleteChat, isCollapsed }: SidebarProps) {
     const [width, setWidth] = useState(DEFAULT_W)
+    const [search, setSearch] = useState('')
+    const [deleteTarget, setDeleteTarget] = useState<Chat | null>(null)
     const dragging = useRef(false)
     const startX = useRef(0)
     const startW = useRef(DEFAULT_W)
 
-    /* ── Drag-to-resize ─────────────────────────────────────────────────── */
+    /* ── Resize ──────────────────────────────────────────────────────── */
     const onPointerDown = useCallback((e: PointerEvent<HTMLDivElement>) => {
         if (isCollapsed) return
         dragging.current = true
         startX.current = e.clientX
-        startW.current = width
-            ; (e.target as HTMLElement).setPointerCapture(e.pointerId)
+        startW.current = width;
+        (e.target as HTMLElement).setPointerCapture(e.pointerId)
     }, [isCollapsed, width])
 
     const onPointerMove = useCallback((e: PointerEvent<HTMLDivElement>) => {
         if (!dragging.current) return
-        const delta = e.clientX - startX.current
-        setWidth(Math.min(MAX_W, Math.max(MIN_W, startW.current + delta)))
+        setWidth(Math.min(MAX_W, Math.max(MIN_W, startW.current + e.clientX - startX.current)))
     }, [])
 
     const onPointerUp = useCallback(() => { dragging.current = false }, [])
 
-    /* ── Chat groups ────────────────────────────────────────────────────── */
-    const today = chats.filter((c) => c.group === 'today')
-    const yesterday = chats.filter((c) => c.group === 'yesterday')
-    const older = chats.filter((c) => c.group === 'older')
+    /* ── Filtering ───────────────────────────────────────────────────── */
+    const filter = search.trim().toLowerCase()
+    const filtered = filter ? chats.filter((c) => c.title.toLowerCase().includes(filter)) : chats
 
-    function ChatGroup({ label, items }: { label: string; items: Chat[] }) {
-        if (items.length === 0) return null
-        return (
-            <div className="mb-1">
-                {!isCollapsed && (
-                    <p className="px-3 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50 select-none">
-                        {label}
-                    </p>
-                )}
-                {items.map((chat) => (
-                    <ChatRow key={chat.id} chat={chat} />
-                ))}
-            </div>
-        )
-    }
+    const today = filtered.filter((c) => c.group === 'today')
+    const yesterday = filtered.filter((c) => c.group === 'yesterday')
+    const older = filtered.filter((c) => c.group === 'older')
 
+    /* ── Chat row ────────────────────────────────────────────────────── */
     function ChatRow({ chat }: { chat: Chat }) {
         const isActive = activeChatId === chat.id
         return (
-            <Tooltip delayDuration={isCollapsed ? 100 : 999999}>
+            <Tooltip delayDuration={isCollapsed ? 200 : 99999}>
                 <TooltipTrigger asChild>
-                    <div className="group relative mx-1.5 mb-0.5">
+                    <div className="group relative mx-2 mb-0.5">
+                        {/* Main button */}
                         <button
                             type="button"
                             onClick={() => onSelectChat(chat.id)}
-                            aria-current={isActive ? 'true' : undefined}
+                            aria-current={isActive ? 'page' : undefined}
+                            aria-label={chat.title}
                             className={cn(
-                                'w-full flex items-center gap-2.5 rounded-xl px-2.5 py-2.5 text-sm text-left',
-                                'transition-all duration-150 outline-none',
-                                'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-sidebar',
+                                'w-full flex items-center gap-3 rounded-xl transition-all duration-150',
+                                'text-left text-[13px] outline-none select-none',
+                                'focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 focus-visible:ring-offset-sidebar',
+                                isCollapsed ? 'justify-center p-2.5' : 'pl-3 pr-9 py-2.5',
                                 isActive
-                                    ? 'bg-primary/12 text-foreground border border-primary/20 shadow-[0_0_12px_hsl(var(--primary)/0.1)]'
-                                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50 border border-transparent',
-                                isCollapsed ? 'justify-center px-2' : 'pr-8', // right pad for delete btn
+                                    ? 'bg-[hsl(var(--primary)/0.12)] text-foreground border border-[hsl(var(--primary)/0.2)] shadow-[0_0_12px_hsl(var(--primary)/0.08)]'
+                                    : 'border border-transparent text-muted-foreground hover:text-foreground hover:bg-[hsl(var(--muted)/0.5)]'
                             )}
                         >
-                            <MessageSquare
-                                className={cn('h-3.5 w-3.5 shrink-0 transition-colors', isActive ? 'text-primary' : 'opacity-50')}
-                            />
+                            <MessageSquare className={cn('shrink-0 transition-colors', isCollapsed ? 'h-4 w-4' : 'h-3.5 w-3.5',
+                                isActive ? 'text-primary' : 'text-muted-foreground/60')} aria-hidden="true" />
                             {!isCollapsed && (
-                                <span className="truncate flex-1 text-[13px] leading-snug">
-                                    {chat.title}
-                                </span>
+                                <span className="truncate leading-snug">{chat.title}</span>
                             )}
                         </button>
 
-                        {/* Delete button — absolutely positioned inside the row so truncation is safe */}
+                        {/* Delete — shown on hover, safely padded to avoid text overlap */}
                         {!isCollapsed && (
                             <button
                                 type="button"
-                                onClick={(e: MouseEvent) => { e.stopPropagation(); onDeleteChat(chat.id) }}
+                                onClick={(e: MouseEvent) => { e.stopPropagation(); setDeleteTarget(chat) }}
                                 aria-label={`Delete "${chat.title}"`}
                                 className={cn(
-                                    'absolute right-1.5 top-1/2 -translate-y-1/2',
+                                    'absolute right-2 top-1/2 -translate-y-1/2',
                                     'flex h-6 w-6 items-center justify-center rounded-lg',
-                                    'text-muted-foreground/0 group-hover:text-muted-foreground/60',
-                                    'hover:!text-destructive hover:bg-destructive/10',
+                                    'opacity-0 group-hover:opacity-100',
+                                    'text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10',
                                     'transition-all duration-150 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
                                 )}
                             >
-                                <Trash2 className="h-3 w-3" />
+                                <Trash2 className="h-3 w-3" aria-hidden="true" />
                             </button>
                         )}
                     </div>
                 </TooltipTrigger>
-                {isCollapsed && <TooltipContent side="right">{chat.title}</TooltipContent>}
+                {isCollapsed && <TooltipContent side="right" sideOffset={8}>{chat.title}</TooltipContent>}
             </Tooltip>
         )
     }
 
-    return (
-        <aside
-            className="relative flex flex-col h-full bg-sidebar border-r border-border/60 shrink-0 select-none"
-            style={{ width: isCollapsed ? 56 : width }}
-            aria-label="Chat history sidebar"
-        >
-            {/* New chat */}
-            <div className={cn('p-2.5', isCollapsed ? 'flex justify-center' : '')}>
-                <Tooltip delayDuration={isCollapsed ? 100 : 999999}>
-                    <TooltipTrigger asChild>
-                        <Button
-                            onClick={onNewChat}
-                            variant="outline"
-                            size={isCollapsed ? 'icon' : 'default'}
-                            className={cn(
-                                'border-border/60 bg-surface/60 hover:bg-surface text-foreground gap-2 transition-all duration-150',
-                                isCollapsed ? 'h-9 w-9' : 'w-full h-9 text-sm font-medium',
-                            )}
-                            aria-label="New chat"
-                        >
-                            <Plus className="h-4 w-4 shrink-0" />
-                            {!isCollapsed && <span>New chat</span>}
-                        </Button>
-                    </TooltipTrigger>
-                    {isCollapsed && <TooltipContent side="right">New chat</TooltipContent>}
-                </Tooltip>
-            </div>
-
-            {/* Search bar */}
-            {!isCollapsed && (
-                <div className="px-2.5 pb-2">
-                    <div className="flex items-center gap-2 rounded-xl border border-border/40 bg-muted/30 px-3 py-2 text-xs text-muted-foreground/50 cursor-default select-none">
-                        <Search className="h-3.5 w-3.5 shrink-0" />
-                        <span>Search chats…</span>
-                    </div>
-                </div>
-            )}
-
-            {/* Divider */}
-            <div className="mx-2.5 h-px bg-border/50" />
-
-            {/* Chat list */}
-            <ScrollArea className="flex-1 py-1">
-                {chats.length === 0 ? (
-                    !isCollapsed && (
-                        <p className="px-4 py-8 text-center text-xs text-muted-foreground/40 select-none leading-relaxed">
-                            No chats yet.<br />Start a new conversation.
-                        </p>
-                    )
-                ) : (
-                    <>
-                        <ChatGroup label="Today" items={today} />
-                        <ChatGroup label="Yesterday" items={yesterday} />
-                        <ChatGroup label="Older" items={older} />
-                    </>
+    function Group({ label, items }: { label: string; items: Chat[] }) {
+        if (items.length === 0) return null
+        return (
+            <div className="mb-2">
+                {!isCollapsed && (
+                    <p className="px-4 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/40 select-none">
+                        {label}
+                    </p>
                 )}
-            </ScrollArea>
+                {items.map((c) => <ChatRow key={c.id} chat={c} />)}
+            </div>
+        )
+    }
 
-            {/* Drag handle */}
-            {!isCollapsed && (
-                <div
-                    className={cn(
-                        'absolute right-0 top-0 bottom-0 flex items-center justify-center',
-                        'w-3 cursor-col-resize group/handle z-10',
-                        'hover:before:opacity-100 before:opacity-0 before:content-[""] before:absolute before:inset-y-0 before:right-0 before:w-px before:bg-primary/40 before:transition-opacity',
+    return (
+        <>
+            {/* Sidebar panel */}
+            <aside
+                className="relative flex flex-col h-full shrink-0 bg-sidebar select-none overflow-hidden"
+                style={{
+                    width: isCollapsed ? COLLAPSED_W : width,
+                    borderRight: '1px solid hsl(var(--border) / 0.5)',
+                    transition: 'width 200ms cubic-bezier(0.4,0,0.2,1)',
+                }}
+                aria-label="Chat history"
+                role="navigation"
+            >
+                {/* Header */}
+                <div className={cn('flex items-center gap-2 px-3 pt-3 pb-2', isCollapsed && 'justify-center px-2')}>
+                    {!isCollapsed && (
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <div className="h-6 w-6 rounded-lg bg-primary/15 border border-primary/20 flex items-center justify-center shrink-0">
+                                <Sparkles className="h-3.5 w-3.5 text-primary" aria-hidden="true" />
+                            </div>
+                            <span className="text-sm font-semibold text-foreground tracking-tight truncate">Chats</span>
+                        </div>
                     )}
-                    onPointerDown={onPointerDown}
-                    onPointerMove={onPointerMove}
-                    onPointerUp={onPointerUp}
-                    aria-hidden="true"
-                >
-                    <GripVertical className="h-4 w-4 text-border group-hover/handle:text-muted-foreground/50 transition-colors" />
+                    <Tooltip delayDuration={isCollapsed ? 200 : 99999}>
+                        <TooltipTrigger asChild>
+                            <button
+                                type="button"
+                                onClick={onNewChat}
+                                aria-label="New chat"
+                                className={cn(
+                                    'flex items-center justify-center rounded-xl transition-all duration-150',
+                                    'border border-border/50 bg-surface/80 text-muted-foreground',
+                                    'hover:bg-surface hover:text-foreground hover:border-primary/30',
+                                    'active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
+                                    isCollapsed ? 'h-9 w-9' : 'h-8 w-8 shrink-0'
+                                )}
+                            >
+                                <Plus className="h-4 w-4" aria-hidden="true" />
+                            </button>
+                        </TooltipTrigger>
+                        <TooltipContent side={isCollapsed ? 'right' : 'bottom'} sideOffset={8}>New chat ⌘N</TooltipContent>
+                    </Tooltip>
                 </div>
-            )}
-        </aside>
+
+                {/* Search */}
+                {!isCollapsed && (
+                    <div className="px-3 pb-2">
+                        <label htmlFor="sidebar-search" className="sr-only">Search chats</label>
+                        <div className="relative">
+                            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/40 pointer-events-none" aria-hidden="true" />
+                            <input
+                                id="sidebar-search"
+                                type="search"
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                placeholder="Search chats…"
+                                className={cn(
+                                    'w-full rounded-xl border border-border/40 bg-muted/30',
+                                    'pl-8 pr-3 py-1.5 text-xs text-foreground placeholder:text-muted-foreground/40',
+                                    'focus:outline-none focus:border-primary/40 focus:bg-muted/50 transition-all duration-150'
+                                )}
+                                aria-controls="chat-list"
+                            />
+                        </div>
+                    </div>
+                )}
+
+                {/* Divider */}
+                <div className="mx-3 h-px bg-border/40" aria-hidden="true" />
+
+                {/* Chat list */}
+                <ScrollArea className="flex-1 py-2" id="chat-list" aria-label="Previous chats">
+                    {filtered.length === 0 ? (
+                        !isCollapsed && (
+                            <p className="px-4 py-8 text-center text-xs text-muted-foreground/40 select-none leading-relaxed">
+                                {search ? 'No chats match your search.' : 'No chats yet.\nStart a new conversation.'}
+                            </p>
+                        )
+                    ) : (
+                        <>
+                            <Group label="Today" items={today} />
+                            <Group label="Yesterday" items={yesterday} />
+                            <Group label="Older" items={older} />
+                        </>
+                    )}
+                </ScrollArea>
+
+                {/* Resize handle */}
+                {!isCollapsed && (
+                    <div
+                        className="absolute right-0 inset-y-0 w-3 cursor-col-resize z-10 flex items-center justify-center group/handle"
+                        onPointerDown={onPointerDown}
+                        onPointerMove={onPointerMove}
+                        onPointerUp={onPointerUp}
+                        aria-hidden="true"
+                        role="separator"
+                        aria-orientation="vertical"
+                    >
+                        <div className="h-8 w-[3px] rounded-full bg-border/0 group-hover/handle:bg-primary/30 transition-colors duration-200" />
+                    </div>
+                )}
+            </aside>
+
+            {/* Delete confirmation */}
+            <AlertDialog open={deleteTarget !== null} onOpenChange={(o) => !o && setDeleteTarget(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete this chat?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            <strong className="text-foreground">"{deleteTarget?.title}"</strong> will be permanently deleted. This cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={() => {
+                                if (deleteTarget) {
+                                    onDeleteChat(deleteTarget.id)
+                                    setDeleteTarget(null)
+                                }
+                            }}
+                        >
+                            Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </>
     )
 }

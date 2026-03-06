@@ -7,58 +7,30 @@ import { ChatInput } from '@/components/ChatInput'
 import { ReportModal } from '@/components/ReportModal'
 import type { Chat, Message } from '@/types'
 
-/* ── Fake responses for demo ─────────────────────────────────────────────── */
-const FAKE_RESPONSES = [
-    "The fire sword is obtained by defeating the Fire Drake in the Volcanic Depths. You'll need the Knight's Plate armor before attempting this fight — it reduces fire damage by 40%.",
-    "I'd recommend starting with the **Swordigo Enhanced** mod for quality-of-life improvements. It adds a mini-map, reworked enemy AI, and balance tweaks without altering the core feel of the game.",
-    "The secret areas include: the Hidden Crypt below the Ancient City, the Sky Fortress accessible via the northern mountains, and the Sunken Temple reachable with the Waterbreathing pendant.",
-    "For the final boss, use the Holy Sword and keep your mana high for healing. The key is to dodge his third-phase shadow clones — focus on the one with the red aura, that's always the real one.",
-    "Great question! Swordigo Plus provides a full modding SDK so you can extend the game with Lua scripts, custom enemies, items, and even entirely new areas.",
+/* ── Demo responses ─────────────────────────────────────────────────────── */
+const RESPONSES = [
+    "The fire sword is obtained by defeating the Fire Drake in the Volcanic Depths. Equip the Knight's Plate armor first — it reduces fire damage by 40%.",
+    "I'd recommend **Swordigo Enhanced** for quality-of-life improvements: it adds a mini-map, reworked AI, and balance tweaks without altering the core experience.",
+    "Secret areas include: the Hidden Crypt below the Ancient City, the Sky Fortress via the northern mountains, and the Sunken Temple (Waterbreathing pendant required).",
+    "For the final boss, keep mana high for heals and use the Holy Sword. During phase 3, focus the shadow clone with the **red aura** — that's always the real one.",
+    "SwordigoPlus provides a full modding SDK: Lua scripts, custom enemies, items, and entirely new areas. Check the developer portal for docs.",
 ]
+let respIdx = 0
+const nextResponse = () => RESPONSES[respIdx++ % RESPONSES.length]
 
-let fakeIdx = 0
-function nextFakeResponse(): string {
-    const r = FAKE_RESPONSES[fakeIdx % FAKE_RESPONSES.length]
-    fakeIdx++
-    return r
-}
+/* ── Utilities ──────────────────────────────────────────────────────────── */
+function uid() { return Math.random().toString(36).slice(2, 10) }
 
-/* ── Utilities ─────────────────────────────────────────────────────────────── */
-function uid(): string {
-    return Math.random().toString(36).slice(2, 10)
-}
-
-
-
-/* ── Seed chats (demo) ────────────────────────────────────────────────────── */
 function makeSeedChats(): Chat[] {
     const now = Date.now()
     return [
-        {
-            id: uid(),
-            title: 'How to get the fire sword?',
-            messages: [],
-            createdAt: now - 1_000 * 60 * 5,
-            group: 'today',
-        },
-        {
-            id: uid(),
-            title: 'Best mods for Swordigo?',
-            messages: [],
-            createdAt: now - 86_400_000 - 3_600_000,
-            group: 'yesterday',
-        },
-        {
-            id: uid(),
-            title: 'Secret areas guide',
-            messages: [],
-            createdAt: now - 3 * 86_400_000,
-            group: 'older',
-        },
+        { id: uid(), title: 'How to get the fire sword?', messages: [], createdAt: now - 5 * 60_000, group: 'today' },
+        { id: uid(), title: 'Best mods for Swordigo?', messages: [], createdAt: now - 90_000_000, group: 'yesterday' },
+        { id: uid(), title: 'Secret areas guide', messages: [], createdAt: now - 3 * 86_400_000, group: 'older' },
     ]
 }
 
-/* ── Page ─────────────────────────────────────────────────────────────────── */
+/* ── Page ───────────────────────────────────────────────────────────────── */
 export default function CopilotPage() {
     const [chats, setChats] = useState<Chat[]>(makeSeedChats)
     const [activeChatId, setActiveChatId] = useState<string | null>(null)
@@ -69,117 +41,91 @@ export default function CopilotPage() {
     const activeChat = chats.find((c) => c.id === activeChatId) ?? null
     const messages = activeChat?.messages ?? []
 
-    /* Create a new chat and activate it */
+    /* ── New chat ─────────────────────────────────────────────────────── */
     const handleNewChat = useCallback(() => {
         const id = uid()
-        const newChat: Chat = {
-            id,
-            title: 'New chat',
-            messages: [],
-            createdAt: Date.now(),
-            group: 'today',
-        }
-        setChats((prev) => [newChat, ...prev])
+        setChats((prev) => [{ id, title: 'New chat', messages: [], createdAt: Date.now(), group: 'today' }, ...prev])
         setActiveChatId(id)
     }, [])
 
-    /* Delete a chat */
+    /* ── Delete ───────────────────────────────────────────────────────── */
     const handleDeleteChat = useCallback((id: string) => {
         setChats((prev) => prev.filter((c) => c.id !== id))
         setActiveChatId((prev) => (prev === id ? null : prev))
     }, [])
 
-    /* Send a message */
+    /* ── Send ─────────────────────────────────────────────────────────── */
     const handleSend = useCallback(async (content: string) => {
         let chatId = activeChatId
-
-        // Create chat on first message
         if (!chatId) {
             chatId = uid()
-            const newChat: Chat = {
-                id: chatId,
-                title: content.slice(0, 40) + (content.length > 40 ? '…' : ''),
-                messages: [],
-                createdAt: Date.now(),
-                group: 'today',
-            }
-            setChats((prev) => [newChat, ...prev])
+            const title = content.slice(0, 42) + (content.length > 42 ? '…' : '')
+            setChats((prev) => [{ id: chatId!, title, messages: [], createdAt: Date.now(), group: 'today' }, ...prev])
             setActiveChatId(chatId)
         }
 
-        const userMsg: Message = {
-            id: uid(),
-            role: 'user',
-            content,
-            timestamp: Date.now(),
-        }
+        const userMsg: Message = { id: uid(), role: 'user', content, timestamp: Date.now() }
+        setChats((prev) => prev.map((c) => c.id === chatId
+            ? {
+                ...c,
+                title: c.title === 'New chat' ? content.slice(0, 42) + (content.length > 42 ? '…' : '') : c.title,
+                messages: [...c.messages, userMsg],
+            } : c
+        ))
 
-        // Update title from first message
-        setChats((prev) =>
-            prev.map((c) =>
-                c.id === chatId
-                    ? {
-                        ...c,
-                        title: c.title === 'New chat'
-                            ? content.slice(0, 40) + (content.length > 40 ? '…' : '')
-                            : c.title,
-                        messages: [...c.messages, userMsg],
-                    }
-                    : c
-            )
-        )
-
-        // Show typing indicator
         setIsTyping(true)
+        await new Promise((r) => setTimeout(r, 1000 + Math.random() * 700))
 
-        await new Promise((r) => setTimeout(r, 1200 + Math.random() * 800))
-
+        const aiContent = nextResponse()
         const aiMsg: Message = {
             id: uid(),
             role: 'assistant',
-            content: nextFakeResponse(),
+            content: aiContent,
+            variants: [aiContent],
+            activeVariant: 0,
             timestamp: Date.now(),
         }
-
         setIsTyping(false)
-        setChats((prev) =>
-            prev.map((c) =>
-                c.id === chatId
-                    ? { ...c, messages: [...c.messages, aiMsg] }
-                    : c
-            )
-        )
+        setChats((prev) => prev.map((c) => c.id === chatId ? { ...c, messages: [...c.messages, aiMsg] } : c))
     }, [activeChatId])
 
-    /* Regenerate (mock) */
-    const handleRegen = useCallback((_msgId: string, _mode: string) => {
+    /* ── Regenerate (adds new variant) ───────────────────────────────── */
+    const handleRegen = useCallback((msgId: string) => {
         if (!activeChatId) return
         setIsTyping(true)
         setTimeout(() => {
-            const aiMsg: Message = {
-                id: uid(),
-                role: 'assistant',
-                content: nextFakeResponse(),
-                timestamp: Date.now(),
-            }
+            const newVariant = nextResponse()
             setIsTyping(false)
-            setChats((prev) =>
-                prev.map((c) =>
-                    c.id === activeChatId
-                        ? { ...c, messages: [...c.messages, aiMsg] }
-                        : c
-                )
-            )
-        }, 1100)
+            setChats((prev) => prev.map((c) => {
+                if (c.id !== activeChatId) return c
+                return {
+                    ...c,
+                    messages: c.messages.map((m) => {
+                        if (m.id !== msgId) return m
+                        const variants = [...(m.variants ?? [m.content]), newVariant]
+                        return { ...m, variants, activeVariant: variants.length - 1, content: newVariant }
+                    }),
+                }
+            }))
+        }, 900 + Math.random() * 600)
     }, [activeChatId])
 
-    /* Keyboard shortcut — Ctrl/Cmd+N for new chat */
+    /* ── Variant switch ───────────────────────────────────────────────── */
+    const handleVariantChange = useCallback((msgId: string, index: number) => {
+        setChats((prev) => prev.map((c) => ({
+            ...c,
+            messages: c.messages.map((m) => {
+                if (m.id !== msgId) return m
+                const clamped = Math.max(0, Math.min(index, (m.variants?.length ?? 1) - 1))
+                return { ...m, activeVariant: clamped, content: m.variants?.[clamped] ?? m.content }
+            }),
+        })))
+    }, [])
+
+    /* ── Keyboard shortcuts ───────────────────────────────────────────── */
     useEffect(() => {
         function onKey(e: KeyboardEvent) {
-            if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
-                e.preventDefault()
-                handleNewChat()
-            }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'n') { e.preventDefault(); handleNewChat() }
         }
         window.addEventListener('keydown', onKey)
         return () => window.removeEventListener('keydown', onKey)
@@ -187,16 +133,10 @@ export default function CopilotPage() {
 
     return (
         <TooltipProvider>
-            <div className="h-full flex flex-col overflow-hidden bg-background">
-                {/* Topbar */}
-                <Topbar
-                    onToggleSidebar={() => setSidebarCollapsed((v) => !v)}
-                    sidebarCollapsed={sidebarCollapsed}
-                />
+            <div className="h-full flex flex-col overflow-hidden bg-background" aria-label="SwordigoPlus Copilot">
+                <Topbar onToggleSidebar={() => setSidebarCollapsed((v) => !v)} sidebarCollapsed={sidebarCollapsed} />
 
-                {/* Body */}
                 <div className="flex flex-1 overflow-hidden">
-                    {/* Sidebar */}
                     <Sidebar
                         chats={chats}
                         activeChatId={activeChatId}
@@ -206,12 +146,11 @@ export default function CopilotPage() {
                         isCollapsed={sidebarCollapsed}
                     />
 
-                    {/* Chat area */}
-                    <main className="flex flex-col flex-1 overflow-hidden relative" aria-label="Copilot chat">
-                        {/* Ambient background blobs — subtle */}
+                    <main className="relative flex flex-col flex-1 overflow-hidden" aria-label="Chat">
+                        {/* Ambient blobs */}
                         <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
-                            <div className="absolute -top-1/4 right-0 h-[60vmax] w-[60vmax] rounded-full bg-primary/5 blur-[100px] motion-safe:animate-blob-1" />
-                            <div className="absolute -bottom-1/4 left-0 h-[50vmax] w-[50vmax] rounded-full bg-accent/4 blur-[120px] motion-safe:animate-blob-2" />
+                            <div className="absolute -top-1/3 right-0 h-[70vmax] w-[70vmax] rounded-full bg-primary/4 blur-[120px] animate-blob-1" />
+                            <div className="absolute -bottom-1/3 left-0 h-[55vmax] w-[55vmax] rounded-full bg-primary/3 blur-[140px] animate-blob-2" />
                         </div>
 
                         <ChatView
@@ -219,24 +158,18 @@ export default function CopilotPage() {
                             isTyping={isTyping}
                             onReport={(id) => setReportMsgId(id)}
                             onRegen={handleRegen}
+                            onVariantChange={handleVariantChange}
                             onSuggest={handleSend}
                         />
 
-                        <ChatInput
-                            onSend={handleSend}
-                            disabled={isTyping}
-                        />
+                        <ChatInput onSend={handleSend} disabled={isTyping} />
                     </main>
                 </div>
 
-                {/* Report modal */}
                 <ReportModal
                     open={reportMsgId !== null}
                     onClose={() => setReportMsgId(null)}
-                    onSubmit={(_reason, _details) => {
-                        // TODO: send to backend
-                        setReportMsgId(null)
-                    }}
+                    onSubmit={() => setReportMsgId(null)}
                 />
             </div>
         </TooltipProvider>

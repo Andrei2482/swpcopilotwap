@@ -8,6 +8,15 @@ export default {
             padding: '2rem',
             screens: { '2xl': '1400px' },
         },
+        screens: {
+            'xs': '480px',
+            'sm': '640px',
+            'md': '768px',
+            'lg': '1024px',
+            'xl': '1280px',
+            '2xl': '1536px',
+            '3xl': '1920px',
+        },
         extend: {
             fontFamily: {
                 sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
@@ -45,6 +54,10 @@ export default {
                     foreground: 'hsl(var(--card-foreground))',
                 },
                 sidebar: 'hsl(var(--sidebar))',
+                popover: {
+                    DEFAULT: 'hsl(var(--popover))',
+                    foreground: 'hsl(var(--popover-foreground))',
+                },
             },
             borderRadius: {
                 lg: 'var(--radius)',
