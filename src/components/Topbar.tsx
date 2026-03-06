@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Settings, History, Link2, LogOut, PanelLeftClose, PanelLeftOpen, Sparkles, Moon, Sun } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -7,17 +8,31 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useTheme } from '@/context/ThemeContext'
+import { logout, type AuthUser } from '@/lib/auth'
 import { cn } from '@/lib/utils'
 
 interface TopbarProps {
     onToggleSidebar: () => void
     sidebarCollapsed: boolean
+    user: AuthUser
 }
 
-export function Topbar({ onToggleSidebar, sidebarCollapsed }: TopbarProps) {
+export function Topbar({ onToggleSidebar, sidebarCollapsed, user }: TopbarProps) {
     const navigate = useNavigate()
     const { theme, setTheme } = useTheme()
     const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+    const [loggingOut, setLoggingOut] = useState(false)
+
+    // Avatar initial — first letter of username or fallback
+    const initial = (user.username[0] ?? 'S').toUpperCase()
+    const displayName = user.display_name ?? user.username
+
+    async function handleLogout() {
+        if (loggingOut) return
+        setLoggingOut(true)
+        await logout() // clears tokens + redirects to login — this line rarely returns
+        setLoggingOut(false)
+    }
 
     const iconBtn = cn(
         'flex h-8 w-8 items-center justify-center rounded-xl',
@@ -28,7 +43,7 @@ export function Topbar({ onToggleSidebar, sidebarCollapsed }: TopbarProps) {
 
     return (
         <header
-            className="glass-topbar flex items-center justify-between h-13 px-3 sm:px-4 shrink-0 z-20"
+            className="glass-topbar flex items-center justify-between shrink-0 z-20 px-3 sm:px-4"
             style={{ height: '52px' }}
             role="banner"
         >
@@ -55,16 +70,10 @@ export function Topbar({ onToggleSidebar, sidebarCollapsed }: TopbarProps) {
                 </Tooltip>
 
                 {/* Brand */}
-                <div
-                    className="flex items-center gap-2 select-none pl-1"
-                    aria-label="SwordigoPlus Copilot"
-                >
+                <div className="flex items-center gap-2 select-none pl-1" aria-label="SwordigoPlus Copilot">
                     <div
                         className="h-[28px] w-[28px] flex items-center justify-center rounded-[10px]"
-                        style={{
-                            background: 'hsl(var(--primary) / 0.10)',
-                            border: '1px solid hsl(var(--primary) / 0.18)',
-                        }}
+                        style={{ background: 'hsl(var(--primary)/0.10)', border: '1px solid hsl(var(--primary)/0.18)' }}
                     >
                         <Sparkles className="h-3.5 w-3.5 text-primary" aria-hidden="true" />
                     </div>
@@ -74,11 +83,7 @@ export function Topbar({ onToggleSidebar, sidebarCollapsed }: TopbarProps) {
                         </span>
                         <span
                             className="text-[9.5px] font-bold leading-none px-1.5 py-[3px] rounded-full"
-                            style={{
-                                background: 'hsl(var(--primary) / 0.12)',
-                                color: 'hsl(var(--primary))',
-                                letterSpacing: '0.04em',
-                            }}
+                            style={{ background: 'hsl(var(--primary)/0.12)', color: 'hsl(var(--primary))', letterSpacing: '0.04em' }}
                         >
                             BETA
                         </span>
@@ -112,43 +117,47 @@ export function Topbar({ onToggleSidebar, sidebarCollapsed }: TopbarProps) {
                     <DropdownMenuTrigger asChild>
                         <button
                             type="button"
-                            aria-label="Open profile menu"
+                            aria-label={`Open profile menu for ${displayName}`}
                             aria-haspopup="menu"
+                            disabled={loggingOut}
                             className={cn(
                                 'ml-0.5 rounded-full outline-none transition-all duration-150',
                                 'ring-2 ring-transparent hover:ring-primary/35',
-                                'focus-visible:ring-primary active:scale-95'
+                                'focus-visible:ring-primary active:scale-95',
+                                loggingOut && 'opacity-50 pointer-events-none'
                             )}
                         >
                             <Avatar className="h-[30px] w-[30px]">
-                                <AvatarImage src="" alt="Your profile" />
+                                <AvatarImage src="" alt={displayName} />
                                 <AvatarFallback
                                     className="text-[11px] font-bold"
-                                    style={{
-                                        background: 'hsl(var(--primary) / 0.14)',
-                                        color: 'hsl(var(--primary))',
-                                    }}
+                                    style={{ background: 'hsl(var(--primary)/0.14)', color: 'hsl(var(--primary))' }}
                                 >
-                                    SP
+                                    {initial}
                                 </AvatarFallback>
                             </Avatar>
                         </button>
                     </DropdownMenuTrigger>
 
                     <DropdownMenuContent align="end" sideOffset={10} className="w-52">
+                        {/* Real user info */}
                         <DropdownMenuLabel>
                             <div className="flex items-center gap-2.5 py-0.5">
                                 <Avatar className="h-8 w-8 shrink-0">
                                     <AvatarFallback
                                         className="text-xs font-bold"
-                                        style={{ background: 'hsl(var(--primary) / 0.14)', color: 'hsl(var(--primary))' }}
+                                        style={{ background: 'hsl(var(--primary)/0.14)', color: 'hsl(var(--primary))' }}
                                     >
-                                        SP
+                                        {initial}
                                     </AvatarFallback>
                                 </Avatar>
                                 <div className="flex flex-col min-w-0">
-                                    <span className="text-[13px] font-semibold truncate text-foreground">My Account</span>
-                                    <span className="text-[11px] text-muted-foreground/55 font-normal truncate">demo@swordigo.plus</span>
+                                    <span className="text-[13px] font-semibold truncate text-foreground">
+                                        {displayName}
+                                    </span>
+                                    <span className="text-[11px] font-normal truncate" style={{ color: 'hsl(var(--muted-foreground)/0.55)' }}>
+                                        {user.email}
+                                    </span>
                                 </div>
                             </div>
                         </DropdownMenuLabel>
@@ -163,8 +172,14 @@ export function Topbar({ onToggleSidebar, sidebarCollapsed }: TopbarProps) {
                             <Link2 className="h-3.5 w-3.5" aria-hidden="true" /> Connections
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="gap-2.5 text-[13px] text-destructive focus:text-destructive focus:bg-destructive/8">
-                            <LogOut className="h-3.5 w-3.5" aria-hidden="true" /> Log out
+                        <DropdownMenuItem
+                            onClick={handleLogout}
+                            disabled={loggingOut}
+                            className="gap-2.5 text-[13px] text-destructive focus:text-destructive focus:bg-destructive/8"
+                            aria-busy={loggingOut}
+                        >
+                            <LogOut className="h-3.5 w-3.5" aria-hidden="true" />
+                            {loggingOut ? 'Signing out…' : 'Log out'}
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>

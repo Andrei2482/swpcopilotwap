@@ -5,6 +5,7 @@ import { ChatView } from '@/components/ChatView'
 import { ChatInput } from '@/components/ChatInput'
 import { ReportModal } from '@/components/ReportModal'
 import type { ModelFlavor } from '@/components/ModelSelector'
+import type { AuthUser } from '@/lib/auth'
 import type { Chat, Message } from '@/types'
 
 /* ── Demo responses ─────────────────────────────────────────────────────── */
@@ -31,7 +32,7 @@ function makeSeedChats(): Chat[] {
 }
 
 /* ── Page ───────────────────────────────────────────────────────────────── */
-export default function CopilotPage() {
+export default function CopilotPage({ user }: { user: AuthUser }) {
     const [chats, setChats] = useState<Chat[]>(makeSeedChats)
     const [activeChatId, setActiveChatId] = useState<string | null>(null)
     const [isTyping, setIsTyping] = useState(false)
@@ -137,7 +138,7 @@ export default function CopilotPage() {
 
     return (
         <div className="h-full flex flex-col overflow-hidden bg-background" aria-label="SwordigoPlus Copilot">
-            <Topbar onToggleSidebar={() => setSidebarCollapsed((v) => !v)} sidebarCollapsed={sidebarCollapsed} />
+            <Topbar onToggleSidebar={() => setSidebarCollapsed((v) => !v)} sidebarCollapsed={sidebarCollapsed} user={user} />
 
             <div className="flex flex-1 overflow-hidden">
                 <Sidebar
