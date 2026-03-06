@@ -89,12 +89,14 @@ export default function CopilotPage() {
         setChats((prev) => prev.map((c) => c.id === chatId ? { ...c, messages: [...c.messages, aiMsg] } : c))
     }, [activeChatId])
 
-    /* ── Regenerate (adds new variant) ───────────────────────────────── */
-    const handleRegen = useCallback((msgId: string) => {
+    /* ── Regenerate (adds new variant) ─── */
+    const handleRegen = useCallback((msgId: string, mode: string) => {
         if (!activeChatId) return
         setIsTyping(true)
         setTimeout(() => {
-            const newVariant = nextResponse()
+            const label = mode.charAt(0).toUpperCase() + mode.slice(1)
+            const base = nextResponse()
+            const newVariant = `[${label}] ${base}`
             setIsTyping(false)
             setChats((prev) => prev.map((c) => {
                 if (c.id !== activeChatId) return c
@@ -107,7 +109,7 @@ export default function CopilotPage() {
                     }),
                 }
             }))
-        }, 900 + Math.random() * 600)
+        }, 700 + Math.random() * 500)
     }, [activeChatId])
 
     /* ── Variant switch ───────────────────────────────────────────────── */

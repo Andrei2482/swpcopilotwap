@@ -2,32 +2,32 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Design tokens — dark (default) ───────────────────────────────────── */
+/* ─── Design tokens ─────────────────────────────────────────────────────── */
 @layer base {
     :root {
+        /* Dark (default) */
         --background: 222 22% 8%;
-        --foreground: 210 20% 92%;
+        --foreground: 210 18% 90%;
 
         --surface: 222 20% 11%;
         --surface-raised: 222 18% 14%;
+        --sidebar: 222 24% 7%;
 
         --card: 222 20% 11%;
-        --card-foreground: 210 20% 92%;
-
-        --sidebar: 222 24% 6.5%;
+        --card-foreground: 210 18% 90%;
 
         --popover: 222 18% 13%;
-        --popover-foreground: 210 20% 92%;
+        --popover-foreground: 210 18% 90%;
 
-        /* Accent — overridden by ThemeContext JS */
+        /* Primary — overridable via ThemeContext */
         --primary: 252 80% 65%;
         --primary-foreground: 0 0% 100%;
 
         --secondary: 222 16% 18%;
-        --secondary-foreground: 210 18% 88%;
+        --secondary-foreground: 210 14% 82%;
 
         --muted: 222 16% 16%;
-        --muted-foreground: 215 12% 52%;
+        --muted-foreground: 215 10% 56%;
 
         --accent: 252 60% 58%;
         --accent-foreground: 0 0% 100%;
@@ -42,44 +42,45 @@
         --radius: 0.75rem;
     }
 
-    /* Light theme */
+    /* Light theme — applied when <html class="light"> */
     .light {
-        --background: 220 20% 97%;
-        --foreground: 222 20% 10%;
+        --background: 220 16% 97%;
+        --foreground: 222 28% 8%;
+        /* near-black */
 
         --surface: 0 0% 100%;
-        --surface-raised: 220 16% 94%;
+        --surface-raised: 220 14% 95%;
+        --sidebar: 220 14% 93%;
 
         --card: 0 0% 100%;
-        --card-foreground: 222 20% 10%;
-
-        --sidebar: 220 18% 93%;
+        --card-foreground: 222 28% 8%;
 
         --popover: 0 0% 100%;
-        --popover-foreground: 222 20% 10%;
+        --popover-foreground: 222 28% 8%;
 
         --primary: 252 80% 55%;
         --primary-foreground: 0 0% 100%;
 
-        --secondary: 220 16% 92%;
-        --secondary-foreground: 222 16% 20%;
+        --secondary: 220 14% 90%;
+        --secondary-foreground: 222 20% 16%;
 
-        --muted: 220 16% 92%;
-        --muted-foreground: 220 10% 50%;
+        --muted: 220 14% 92%;
+        --muted-foreground: 220 12% 36%;
+        /* dark enough to read */
 
-        --accent: 252 70% 53%;
+        --accent: 252 70% 50%;
         --accent-foreground: 0 0% 100%;
 
-        --destructive: 0 84% 56%;
+        --destructive: 0 82% 50%;
         --destructive-foreground: 0 0% 100%;
 
-        --border: 220 14% 87%;
-        --input: 220 14% 87%;
+        --border: 220 14% 83%;
+        --input: 220 14% 85%;
         --ring: 252 80% 55%;
     }
 }
 
-/* ── Base resets ─────────────────────────────────────────────────────── */
+/* ─── Base resets ───────────────────────────────────────────────────────── */
 @layer base {
 
     *,
@@ -89,12 +90,10 @@
     }
 
     html {
-        -webkit-text-size-adjust: 100%;
-        text-size-adjust: 100%;
         height: 100%;
         scroll-behavior: smooth;
-        /* Ensure minimal watch-size viewport doesn't break layout */
-        min-height: 100%;
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
     }
 
     body {
@@ -105,8 +104,7 @@
         -moz-osx-font-smoothing: grayscale;
         height: 100%;
         overflow: hidden;
-        /* Fluid type scale — min 14px → max 16px */
-        font-size: clamp(0.875rem, 1.5vw, 1rem);
+        font-size: clamp(0.875rem, 1.4vw, 1rem);
     }
 
     #root {
@@ -115,23 +113,20 @@
         flex-direction: column;
     }
 
-    /* Focus — visible ring for keyboard users */
     :focus-visible {
         outline: 2px solid hsl(var(--ring));
         outline-offset: 2px;
-        border-radius: var(--radius);
     }
 
-    /* Selections */
     ::selection {
-        background: hsl(var(--primary) / 0.22);
+        background: hsl(var(--primary) / 0.2);
         color: hsl(var(--foreground));
     }
 
-    /* Slim scrollbar */
+    /* Thin scrollbar */
     ::-webkit-scrollbar {
-        width: 4px;
-        height: 4px;
+        width: 3px;
+        height: 3px;
     }
 
     ::-webkit-scrollbar-track {
@@ -144,19 +139,19 @@
     }
 
     ::-webkit-scrollbar-thumb:hover {
-        background: hsl(var(--muted-foreground) / 0.4);
+        background: hsl(var(--muted-foreground) / 0.3);
     }
 
-    /* Skip-to-content link for screen readers */
+    /* Skip-to-content */
     .skip-link {
         position: absolute;
         top: -9999px;
         left: 0;
+        z-index: 9999;
         background: hsl(var(--primary));
         color: hsl(var(--primary-foreground));
         padding: 0.5rem 1rem;
         border-radius: var(--radius);
-        z-index: 9999;
         font-weight: 600;
         font-size: 0.875rem;
     }
@@ -167,47 +162,27 @@
     }
 }
 
-/* ── Utility surfaces ────────────────────────────────────────────────── */
+/* ─── Utilities ─────────────────────────────────────────────────────────── */
 @layer utilities {
+
+    /* Glassmorphism surface */
     .glass {
-        background: hsl(var(--surface) / 0.65);
-        backdrop-filter: blur(14px) saturate(160%);
-        -webkit-backdrop-filter: blur(14px) saturate(160%);
-        border: 1px solid hsl(var(--border) / 0.6);
+        background: hsl(var(--surface) / 0.70);
+        backdrop-filter: blur(16px) saturate(160%);
+        -webkit-backdrop-filter: blur(16px) saturate(160%);
+        border: 1px solid hsl(var(--border) / 0.55);
     }
 
+    /* Topbar */
     .glass-topbar {
-        background: hsl(var(--surface) / 0.82);
-        backdrop-filter: blur(20px) saturate(180%);
-        -webkit-backdrop-filter: blur(20px) saturate(180%);
-        border-bottom: 1px solid hsl(var(--border) / 0.4);
-    }
-
-    .neo-surface {
-        background: hsl(var(--surface));
-        box-shadow:
-            4px 4px 14px hsl(222 25% 3% / 0.55),
-            -2px -2px 8px hsl(222 18% 18% / 0.2);
-    }
-
-    .neo-inset {
-        background: hsl(var(--background));
-        box-shadow:
-            inset 2px 2px 6px hsl(222 25% 3% / 0.5),
-            inset -1px -1px 4px hsl(222 18% 18% / 0.15);
-    }
-
-    /* Responsive text utilities */
-    .text-balance {
-        text-wrap: balance;
-    }
-
-    .text-pretty {
-        text-wrap: pretty;
+        background: hsl(var(--surface) / 0.78);
+        backdrop-filter: blur(24px) saturate(180%);
+        -webkit-backdrop-filter: blur(24px) saturate(180%);
+        border-bottom: 1px solid hsl(var(--border) / 0.35);
     }
 }
 
-/* ── Reduced motion ─────────────────────────────────────────────────── */
+/* ─── Reduced motion ────────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
 
     *,
@@ -220,25 +195,16 @@
     }
 }
 
-/* ── Ultra-small screens (smartwatch / mini viewport) ───────────────── */
+/* ─── Micro screens (watch / 280px) ────────────────────────────────────── */
 @media (max-width: 320px) {
     body {
         font-size: 0.8125rem;
     }
-
-    .glass-topbar {
-        backdrop-filter: blur(8px);
-    }
 }
 
-/* ── Large screens (TV / projector 4K+) ────────────────────────────── */
+/* ─── Large / TV screens (2560px+) ─────────────────────────────────────── */
 @media (min-width: 2560px) {
     body {
-        font-size: 1.0625rem;
-    }
-
-    #root>* {
-        max-width: 2400px;
-        margin: 0 auto;
+        font-size: 1.125rem;
     }
 }

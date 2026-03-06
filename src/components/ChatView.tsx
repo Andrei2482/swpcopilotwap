@@ -8,7 +8,7 @@ interface ChatViewProps {
     messages: Message[]
     isTyping: boolean
     onReport: (messageId: string) => void
-    onRegen: (messageId: string) => void
+    onRegen: (messageId: string, mode: string) => void
     onVariantChange: (messageId: string, index: number) => void
     onSuggest?: (text: string) => void
 }
@@ -146,7 +146,7 @@ export function ChatView({ messages, isTyping, onReport, onRegen, onVariantChang
                                         variantIndex={activeIdx}
                                         variantTotal={variants.length}
                                         onReport={() => onReport(msg.id)}
-                                        onRegen={() => onRegen(msg.id)}
+                                        onRegen={(mode) => onRegen(msg.id, mode)}
                                         onVariantPrev={() => onVariantChange(msg.id, activeIdx - 1)}
                                         onVariantNext={() => onVariantChange(msg.id, activeIdx + 1)}
                                     />
