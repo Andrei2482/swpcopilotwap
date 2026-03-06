@@ -11,87 +11,88 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
     const [value, setValue] = useState('')
     const textareaRef = useRef<HTMLTextAreaElement>(null)
 
-    const resizeTextarea = useCallback(() => {
+    const resize = useCallback(() => {
         const el = textareaRef.current
         if (!el) return
         el.style.height = 'auto'
-        el.style.height = Math.min(el.scrollHeight, 180) + 'px'
+        el.style.height = Math.min(el.scrollHeight, 160) + 'px'
     }, [])
 
-    function handleSend() {
+    function submit() {
         const trimmed = value.trim()
         if (!trimmed || disabled) return
         onSend(trimmed)
         setValue('')
-        // Reset height
-        if (textareaRef.current) {
-            textareaRef.current.style.height = 'auto'
-        }
+        if (textareaRef.current) textareaRef.current.style.height = 'auto'
     }
 
     function handleKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault()
-            handleSend()
+            submit()
         }
     }
 
     const canSend = value.trim().length > 0 && !disabled
 
     return (
-        <div className="shrink-0 px-4 pb-4 pt-2">
-            <div
-                className={cn(
-                    'relative flex items-end gap-2 rounded-2xl border border-border bg-surface px-4 py-3',
-                    'shadow-[0_4px_24px_hsl(222_25%_4%/0.4),0_1px_3px_hsl(222_25%_4%/0.3)]',
-                    'transition-all duration-150',
-                    'focus-within:border-ring/50 focus-within:shadow-[0_4px_24px_hsl(var(--primary)/0.15),0_1px_3px_hsl(222_25%_4%/0.3)]'
-                )}
-            >
-                <textarea
-                    ref={textareaRef}
-                    value={value}
-                    onChange={(e) => {
-                        setValue(e.target.value)
-                        resizeTextarea()
-                    }}
-                    onKeyDown={handleKeyDown}
-                    rows={1}
-                    placeholder="Ask Copilot anything…"
-                    disabled={disabled}
-                    aria-label="Chat message input"
-                    aria-multiline="true"
-                    className={cn(
-                        'flex-1 resize-none bg-transparent text-sm text-foreground placeholder:text-muted-foreground/50',
-                        'focus:outline-none leading-relaxed max-h-[180px] overflow-y-auto',
-                        'disabled:cursor-not-allowed disabled:opacity-50',
-                        'scrollbar-thin'
-                    )}
-                    style={{ minHeight: '22px' }}
-                />
+        <div className="shrink-0 px-4 pb-5 pt-2">
+            {/* Outer glow wrapper */}
+            <div className={cn(
+                'relative rounded-2xl transition-all duration-300',
+                canSend
+                    ? 'shadow-[0_0_0_1px_hsl(var(--primary)/0.5),0_0_24px_hsl(var(--primary)/0.12)]'
+                    : 'shadow-[0_0_0_1px_hsl(var(--border)/0.8)]',
+                'focus-within:shadow-[0_0_0_1.5px_hsl(var(--primary)/0.7),0_0_32px_hsl(var(--primary)/0.18)]'
+            )}>
+                {/* Glass container */}
+                <div className="relative flex flex-col gap-2 rounded-2xl bg-[hsl(var(--surface))] px-4 pt-3.5 pb-3">
+                    <textarea
+                        ref={textareaRef}
+                        value={value}
+                        onChange={(e) => { setValue(e.target.value); resize() }}
+                        onKeyDown={handleKeyDown}
+                        rows={1}
+                        placeholder="Ask Copilot anything about Swordigo…"
+                        disabled={disabled}
+                        aria-label="Chat message input"
+                        aria-multiline="true"
+                        className={cn(
+                            'w-full resize-none bg-transparent text-sm text-foreground leading-relaxed',
+                            'placeholder:text-muted-foreground/40 focus:outline-none',
+                            'max-h-[160px] overflow-y-auto scrollbar-thin',
+                            'disabled:cursor-not-allowed disabled:opacity-50',
+                            'transition-all duration-200'
+                        )}
+                        style={{ minHeight: '24px' }}
+                    />
 
-                {/* Send button */}
-                <button
-                    type="button"
-                    onClick={handleSend}
-                    disabled={!canSend}
-                    aria-label="Send message"
-                    className={cn(
-                        'shrink-0 h-8 w-8 rounded-xl flex items-center justify-center transition-all duration-150',
-                        canSend
-                            ? 'bg-primary text-primary-foreground shadow-[0_2px_10px_hsl(var(--primary)/0.4)] hover:bg-primary/90 active:scale-95'
-                            : 'bg-muted text-muted-foreground cursor-not-allowed opacity-50',
-                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-surface'
-                    )}
-                >
-                    <ArrowUp className="h-4 w-4" aria-hidden="true" />
-                    <span className="sr-only">Send</span>
-                </button>
+                    {/* Bottom row: hint + send */}
+                    <div className="flex items-center justify-between gap-2">
+                        <p className="text-[10px] text-muted-foreground/35 select-none leading-none">
+                            {disabled ? 'Copilot is thinking…' : 'Enter to send · Shift+Enter for new line'}
+                        </p>
+
+                        <button
+                            type="button"
+                            onClick={submit}
+                            disabled={!canSend}
+                            aria-label="Send message"
+                            className={cn(
+                                'flex h-8 w-8 shrink-0 items-center justify-center rounded-xl',
+                                'transition-all duration-200 active:scale-90',
+                                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface',
+                                canSend
+                                    ? 'bg-primary text-primary-foreground shadow-[0_2px_14px_hsl(var(--primary)/0.45)] hover:shadow-[0_2px_20px_hsl(var(--primary)/0.6)] hover:scale-105'
+                                    : 'bg-muted/60 text-muted-foreground/40 cursor-not-allowed'
+                            )}
+                        >
+                            <ArrowUp className="h-4 w-4" aria-hidden="true" />
+                            <span className="sr-only">Send</span>
+                        </button>
+                    </div>
+                </div>
             </div>
-
-            <p className="mt-2 text-center text-[10px] text-muted-foreground/40 select-none">
-                Copilot can make mistakes. Verify important information.
-            </p>
         </div>
     )
 }

@@ -219,6 +219,7 @@ export default function CopilotPage() {
                             isTyping={isTyping}
                             onReport={(id) => setReportMsgId(id)}
                             onRegen={handleRegen}
+                            onSuggest={handleSend}
                         />
 
                         <ChatInput

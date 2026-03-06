@@ -1,84 +1,116 @@
+import { RefreshCw, ZoomIn, ZoomOut, AlignJustify, Wand2, Flag, Copy, Check } from 'lucide-react'
 import { useState } from 'react'
-import { RefreshCw, ZoomIn, ZoomOut, AlignJustify, Wand2, Flag } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
+    DropdownMenuSeparator,
+    DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 
 const REGEN_OPTIONS = [
-    { key: 'longer', label: 'Longer', icon: ZoomIn },
-    { key: 'shorter', label: 'Shorter', icon: ZoomOut },
+    { key: 'longer', label: 'Make it longer', icon: ZoomIn },
+    { key: 'shorter', label: 'Make it shorter', icon: ZoomOut },
     { key: 'concise', label: 'More concise', icon: AlignJustify },
-    { key: 'refine', label: 'Refine', icon: Wand2 },
+    { key: 'refine', label: 'Refine wording', icon: Wand2 },
 ] as const
 
 interface MessageActionsProps {
     messageId: string
+    content: string
     onReport: () => void
     onRegen: (mode: string) => void
 }
 
-export function MessageActions({ messageId: _messageId, onReport, onRegen }: MessageActionsProps) {
-    const [visible, setVisible] = useState(false)
+export function MessageActions({ messageId: _messageId, content, onReport, onRegen }: MessageActionsProps) {
+    const [copied, setCopied] = useState(false)
+
+    async function handleCopy() {
+        try {
+            await navigator.clipboard.writeText(content)
+            setCopied(true)
+            setTimeout(() => setCopied(false), 1600)
+        } catch { }
+    }
+
+    const btnCls = cn(
+        'h-7 w-7 rounded-lg text-muted-foreground/60',
+        'hover:text-foreground hover:bg-muted/60',
+        'transition-all duration-150 active:scale-90',
+        'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
+    )
 
     return (
-        <div
-            className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
-            style={{ opacity: undefined }} /* controlled by parent group hover */
-            onMouseEnter={() => setVisible(true)}
-            onMouseLeave={() => setVisible(false)}
-        >
-            {/* Regenerate dropdown */}
+        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 translate-y-0.5 group-hover:translate-y-0 transition-all duration-200 mt-0.5">
+            {/* Copy */}
+            <Tooltip delayDuration={500}>
+                <TooltipTrigger asChild>
+                    <button
+                        type="button"
+                        onClick={handleCopy}
+                        aria-label="Copy message"
+                        className={cn(btnCls, copied && 'text-primary/80 hover:text-primary')}
+                    >
+                        {copied
+                            ? <Check className="h-3.5 w-3.5" />
+                            : <Copy className="h-3.5 w-3.5" />}
+                    </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-xs">{copied ? 'Copied!' : 'Copy'}</TooltipContent>
+            </Tooltip>
+
+            {/* Regenerate */}
             <DropdownMenu>
-                <Tooltip delayDuration={400}>
+                <Tooltip delayDuration={500}>
                     <TooltipTrigger asChild>
                         <DropdownMenuTrigger asChild>
-                            <Button
-                                variant="ghost"
-                                size="icon-sm"
+                            <button
+                                type="button"
                                 aria-label="Regenerate response"
-                                className="text-muted-foreground hover:text-foreground"
+                                className={btnCls}
                             >
                                 <RefreshCw className="h-3.5 w-3.5" />
-                            </Button>
+                            </button>
                         </DropdownMenuTrigger>
                     </TooltipTrigger>
-                    <TooltipContent side="bottom">Regenerate</TooltipContent>
+                    <TooltipContent side="bottom" className="text-xs">Regenerate</TooltipContent>
                 </Tooltip>
 
-                <DropdownMenuContent align="start" className="w-40">
+                <DropdownMenuContent align="start" sideOffset={6} className="w-44">
+                    <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-semibold">
+                        Regenerate as
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
                     {REGEN_OPTIONS.map(({ key, label, icon: Icon }) => (
-                        <DropdownMenuItem key={key} onClick={() => onRegen(key)}>
-                            <Icon className="h-3.5 w-3.5" />
+                        <DropdownMenuItem
+                            key={key}
+                            onClick={() => onRegen(key)}
+                            className="gap-2 text-sm"
+                        >
+                            <Icon className="h-3.5 w-3.5 text-muted-foreground/70" />
                             {label}
                         </DropdownMenuItem>
                     ))}
                 </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Report button */}
-            <Tooltip delayDuration={400}>
+            {/* Report */}
+            <Tooltip delayDuration={500}>
                 <TooltipTrigger asChild>
-                    <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label="Report message"
-                        className="text-muted-foreground hover:text-destructive"
+                    <button
+                        type="button"
                         onClick={onReport}
+                        aria-label="Report this response"
+                        className={cn(btnCls, 'hover:text-destructive hover:bg-destructive/10')}
                     >
                         <Flag className="h-3.5 w-3.5" />
-                    </Button>
+                    </button>
                 </TooltipTrigger>
-                <TooltipContent side="bottom">Report</TooltipContent>
+                <TooltipContent side="bottom" className="text-xs">Report</TooltipContent>
             </Tooltip>
-
-            {/* Suppress unused state warning: visible is used for future animation */}
-            <span aria-hidden className={cn('hidden', visible && 'invisible')} />
         </div>
     )
 }

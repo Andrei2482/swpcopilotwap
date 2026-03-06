@@ -43,8 +43,8 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 /* ── Row ─────────────────────────────────────────────────────────────────── */
 function Row({ label, description, children }: { label: string; description?: string; children: ReactNode }) {
     return (
-        <div className="flex items-center justify-between gap-4 px-4 py-3.5">
-            <div className="min-w-0">
+        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3.5">
+            <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-foreground leading-snug">{label}</p>
                 {description && (
                     <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{description}</p>
@@ -155,8 +155,8 @@ export default function SettingsPage() {
                         label="Accent Color"
                         description="Choose a highlight color for the interface."
                     >
-                        <Select value={accent} onValueChange={(v) => setAccent(v as AccentColor)}>
-                            <SelectTrigger className="w-[170px]" aria-label="Accent color">
+                        <Select value={accent} onValueChange={(v: string) => setAccent(v as AccentColor)}>
+                            <SelectTrigger className="w-[150px]" aria-label="Accent color">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
