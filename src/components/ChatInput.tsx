@@ -7,12 +7,6 @@ interface ChatInputProps {
     disabled?: boolean
 }
 
-const CHIPS = [
-    'How do I get the fire sword?',
-    'What are the secret areas?',
-    'Best mods for beginners?',
-]
-
 export function ChatInput({ onSend, disabled }: ChatInputProps) {
     const [value, setValue] = useState('')
     const [focused, setFocused] = useState(false)
@@ -22,7 +16,7 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
         const el = ref.current
         if (!el) return
         el.style.height = 'auto'
-        el.style.height = Math.min(el.scrollHeight, 168) + 'px'
+        el.style.height = Math.min(el.scrollHeight, 160) + 'px'
     }, [])
 
     function submit() {
@@ -38,33 +32,32 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
     }
 
     const canSend = value.trim().length > 0 && !disabled
-    const isActive = focused || canSend
+    const ringColor = canSend
+        ? 'hsl(var(--primary) / 0.45)'
+        : focused
+            ? 'hsl(var(--border) / 0.65)'
+            : 'hsl(var(--border) / 0.35)'
 
     return (
-        <div className="shrink-0 pb-4 pt-1.5 px-3 sm:px-5" role="region" aria-label="Message input">
-
-            {/* ── Outer: glow ring ── */}
+        <div className="shrink-0 pb-5 pt-2 px-4 sm:px-6" role="region" aria-label="Message input">
+            {/* Outer glow ring */}
             <div
-                className="rounded-2xl transition-shadow duration-300"
-                style={{
-                    boxShadow: canSend
-                        ? '0 0 0 1.5px hsl(var(--primary)/0.5), 0 0 36px hsl(var(--primary)/0.10)'
-                        : isActive
-                            ? '0 0 0 1.5px hsl(var(--border)/0.7)'
-                            : '0 0 0 1px hsl(var(--border)/0.4)',
-                }}
+                className="rounded-2xl transition-[box-shadow] duration-300"
+                style={{ boxShadow: canSend ? `0 0 0 1.5px ${ringColor}, 0 0 32px hsl(var(--primary) / 0.09)` : `0 0 0 1px ${ringColor}` }}
             >
-                {/* ── Card ── */}
                 <div
-                    className="relative rounded-2xl overflow-hidden flex flex-col"
-                    style={{ background: 'hsl(var(--surface))', boxShadow: '0 2px 20px hsl(222 25% 4%/0.18)' }}
+                    className="relative rounded-2xl overflow-hidden"
+                    style={{
+                        background: 'hsl(var(--surface))',
+                        boxShadow: '0 2px 24px hsl(222 28% 3% / 0.20)',
+                    }}
                 >
-                    {/* Gradient top accent — only when can-send */}
+                    {/* Accent line — top, only when canSend */}
                     <div
                         aria-hidden="true"
-                        className="absolute inset-x-0 top-0 h-[1px] pointer-events-none transition-opacity duration-300"
+                        className="absolute inset-x-0 top-0 h-px pointer-events-none transition-opacity duration-300"
                         style={{
-                            background: 'linear-gradient(90deg, transparent, hsl(var(--primary)/0.6), transparent)',
+                            background: 'linear-gradient(90deg, transparent 5%, hsl(var(--primary) / 0.55) 50%, transparent 95%)',
                             opacity: canSend ? 1 : 0,
                         }}
                     />
@@ -87,76 +80,45 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
                         aria-disabled={disabled}
                         className={cn(
                             'w-full resize-none bg-transparent',
-                            'px-4 pt-3.5 pb-2 text-sm leading-relaxed text-foreground',
-                            'placeholder:text-muted-foreground/28',
-                            'focus:outline-none max-h-44',
-                            'transition-opacity duration-150',
+                            'px-4 pt-4 pb-2 text-[13.5px] leading-relaxed text-foreground',
+                            'placeholder:text-muted-foreground/25',
+                            'focus:outline-none max-h-40',
                             disabled && 'opacity-40 cursor-not-allowed'
                         )}
-                        style={{ minHeight: 28 }}
+                        style={{ minHeight: 24 }}
                     />
 
-                    {/* Bottom bar */}
-                    <div className="flex items-center justify-between gap-2 px-3 pb-2.5 pt-0.5">
-                        {/* Hint */}
-                        <p
-                            className="text-[10px] text-muted-foreground/22 select-none transition-opacity duration-200 leading-none"
+                    {/* Bottom row */}
+                    <div className="flex items-center justify-between gap-2 px-3 pb-3 pt-1">
+                        <span
+                            className="text-[10px] leading-none text-muted-foreground/18 select-none transition-opacity duration-200"
                             aria-live="polite"
                         >
-                            {disabled ? 'Thinking…' : canSend ? '↵ send  ·  ⇧↵ new line' : ''}
-                        </p>
+                            {disabled ? 'Thinking…' : canSend ? '↵ Send  ·  ⇧↵ New line' : ''}
+                        </span>
 
-                        {/* Send button */}
                         <button
                             type="button"
                             onClick={submit}
                             disabled={!canSend}
                             aria-label={disabled ? 'Waiting for response' : 'Send message'}
                             className={cn(
-                                'relative h-8 w-8 shrink-0 flex items-center justify-center rounded-xl select-none',
+                                'h-8 w-8 flex shrink-0 items-center justify-center rounded-xl',
                                 'transition-all duration-200',
-                                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
-                                'focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(var(--surface))]',
+                                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(var(--surface))]',
                                 canSend
-                                    ? [
-                                        'bg-primary text-primary-foreground cursor-pointer',
-                                        'shadow-[0_2px_14px_hsl(var(--primary)/0.38)]',
-                                        'hover:scale-[1.06] hover:shadow-[0_4px_20px_hsl(var(--primary)/0.5)]',
-                                        'active:scale-90',
-                                    ]
-                                    : 'bg-muted/40 text-muted-foreground/20 cursor-not-allowed'
+                                    ? 'bg-primary text-primary-foreground cursor-pointer active:scale-90 hover:scale-[1.07]'
+                                    : 'bg-muted/35 text-muted-foreground/18 cursor-not-allowed'
                             )}
+                            style={canSend ? { boxShadow: '0 2px 12px hsl(var(--primary) / 0.35)' } : undefined}
                         >
                             {disabled
                                 ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
-                                : <ArrowUp className="h-3.5 w-3.5" aria-hidden="true" />
-                            }
+                                : <ArrowUp className="h-3.5 w-3.5" aria-hidden="true" />}
                         </button>
                     </div>
                 </div>
             </div>
-
-            {/* ── Quick chips ── */}
-            {!value && !disabled && (
-                <div className="mt-2 flex flex-wrap gap-1.5" aria-hidden="true">
-                    {CHIPS.map(c => (
-                        <button
-                            key={c}
-                            type="button"
-                            tabIndex={-1}
-                            onClick={() => onSend(c)}
-                            className={cn(
-                                'rounded-lg border border-border/25 px-2.5 py-1',
-                                'text-[11px] text-muted-foreground/38',
-                                'hover:text-foreground hover:border-primary/20 hover:bg-muted/20',
-                                'transition-all duration-150'
-                            )}
-                        >
-                            {c}
-                        </button>
-                    ))}
-                </div>
-            )}
         </div>
     )
 }

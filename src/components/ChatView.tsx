@@ -15,9 +15,9 @@ interface ChatViewProps {
 
 const SUGGESTIONS = [
     { text: 'How do I get the fire sword?', emoji: '🗡️' },
-    { text: 'Best mods to install?', emoji: '🛠️' },
-    { text: 'What are all the secret areas?', emoji: '🗺️' },
-    { text: 'Tips for the final boss', emoji: '⚔️' },
+    { text: 'Best mods for beginners?', emoji: '🛠️' },
+    { text: 'All secret areas in the game', emoji: '🗺️' },
+    { text: 'Tips for beating the final boss', emoji: '⚔️' },
 ]
 
 function TypingDots() {
@@ -26,69 +26,89 @@ function TypingDots() {
             {[0, 1, 2].map(i => (
                 <span
                     key={i}
-                    className="h-[6px] w-[6px] rounded-full bg-muted-foreground/40 animate-[typing-dot_1.15s_ease-in-out_infinite]"
-                    style={{ animationDelay: `${i * 0.17}s` }}
+                    className="h-[5px] w-[5px] rounded-full"
+                    style={{
+                        background: 'hsl(var(--muted-foreground) / 0.45)',
+                        animation: 'typing-dot 1.2s ease-in-out infinite',
+                        animationDelay: `${i * 0.18}s`,
+                    }}
                 />
             ))}
         </span>
     )
 }
 
-export function ChatView({
-    messages, isTyping, onReport, onRegen, onVariantChange, onSuggest
-}: ChatViewProps) {
+export function ChatView({ messages, isTyping, onReport, onRegen, onVariantChange, onSuggest }: ChatViewProps) {
     const bottomRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
     }, [messages, isTyping])
 
-    /* ── Welcome ───────────────────────────────────────────────────── */
+    /* ── Welcome screen ─────────────────────────────────────────────── */
     if (messages.length === 0 && !isTyping) {
         return (
             <div
-                className="flex flex-1 flex-col items-center justify-center gap-6 px-4 py-10 select-none"
+                className="flex flex-1 flex-col items-center justify-center gap-8 px-4 pb-2"
                 aria-label="Welcome"
             >
-                {/* Icon */}
-                <div className="relative" style={{ animationDelay: '0ms' }}>
-                    <div className="absolute inset-0 scale-[2] rounded-full bg-primary/8 blur-3xl" />
-                    <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl border border-primary/20 bg-primary/8 shadow-[0_0_32px_hsl(var(--primary)/0.12)]">
+                {/* Glow + icon */}
+                <div className="relative flex flex-col items-center gap-4" style={{ animation: 'fade-in 320ms ease-out both' }}>
+                    <div
+                        className="absolute inset-0 -z-10 scale-[2.5] rounded-full opacity-30"
+                        style={{ background: 'radial-gradient(circle, hsl(var(--primary)/0.18), transparent 70%)', filter: 'blur(24px)' }}
+                        aria-hidden="true"
+                    />
+                    <div
+                        className="flex h-[52px] w-[52px] items-center justify-center rounded-2xl"
+                        style={{
+                            background: 'hsl(var(--surface))',
+                            border: '1px solid hsl(var(--primary) / 0.22)',
+                            boxShadow: '0 0 0 6px hsl(var(--primary) / 0.06), 0 4px 24px hsl(var(--primary) / 0.14)',
+                        }}
+                    >
                         <Sparkles className="h-6 w-6 text-primary" aria-hidden="true" />
+                    </div>
+                    <div className="text-center max-w-[260px]">
+                        <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-foreground mb-1">
+                            How can I help?
+                        </h1>
+                        <p className="text-[13.5px] text-muted-foreground leading-relaxed">
+                            Ask anything about Swordigo — strategies, mods, lore, or secrets.
+                        </p>
                     </div>
                 </div>
 
-                {/* Heading */}
-                <div className="text-center max-w-[280px] animate-[fade-in_0.3s_ease-out_100ms_both]">
-                    <h1 className="text-[22px] font-semibold tracking-tight text-foreground mb-1.5 text-balance">
-                        How can I help you?
-                    </h1>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                        Ask anything about Swordigo — lore, mods, strategies, secrets.
-                    </p>
-                </div>
-
-                {/* Chips */}
-                <div className="grid grid-cols-1 xs:grid-cols-2 gap-2 w-full max-w-[340px]">
+                {/* Suggestion grid */}
+                <div
+                    className="w-full max-w-[360px] grid grid-cols-1 xs:grid-cols-2 gap-2"
+                    role="list"
+                    aria-label="Suggested questions"
+                >
                     {SUGGESTIONS.map((s, i) => (
                         <button
                             key={s.text}
                             type="button"
+                            role="listitem"
                             onClick={() => onSuggest?.(s.text)}
                             aria-label={s.text}
                             className={cn(
-                                'flex items-center gap-2.5 rounded-xl border border-border/40 bg-surface/40',
-                                'px-3.5 py-2.5 text-left text-[13px] text-muted-foreground',
-                                'hover:text-foreground hover:border-primary/25 hover:bg-surface/80',
-                                'hover:shadow-[0_0_20px_hsl(var(--primary)/0.07)]',
-                                'transition-all duration-200',
-                                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
-                                'animate-[fade-in_0.3s_ease-out_both]'
+                                'group flex items-start gap-3 rounded-xl px-3.5 py-3 text-left',
+                                'border bg-transparent text-muted-foreground',
+                                'hover:text-foreground hover:bg-muted/20',
+                                'active:scale-[0.98] transition-all duration-200',
+                                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary'
                             )}
-                            style={{ animationDelay: `${180 + i * 55}ms` }}
+                            style={{
+                                borderColor: 'hsl(var(--border) / 0.40)',
+                                animation: 'fade-in 300ms ease-out both',
+                                animationDelay: `${80 + i * 50}ms`,
+                            }}
                         >
-                            <span className="text-base leading-none shrink-0">{s.emoji}</span>
-                            <span className="leading-snug">{s.text}</span>
+                            <span className="text-[16px] leading-none mt-0.5 shrink-0 opacity-70 group-hover:opacity-100 transition-opacity duration-200">
+                                {s.emoji}
+                            </span>
+                            <span className="text-[12.5px] leading-snug">{s.text}</span>
                         </button>
                     ))}
                 </div>
@@ -105,7 +125,7 @@ export function ChatView({
             aria-label="Conversation"
             aria-relevant="additions"
         >
-            <div className="mx-auto w-full max-w-2xl px-3 sm:px-5 py-6 space-y-4">
+            <div className="mx-auto w-full max-w-[680px] px-3 sm:px-5 py-6 space-y-5">
                 {messages.map((msg, idx) => {
                     const isUser = msg.role === 'user'
                     const variants = msg.variants ?? [msg.content]
@@ -115,56 +135,53 @@ export function ChatView({
                     return (
                         <div
                             key={msg.id}
-                            className={cn(
-                                'flex gap-3 animate-[msg-in_0.28s_cubic-bezier(0.16,1,0.3,1)_both]',
-                                isUser ? 'justify-end' : 'justify-start'
-                            )}
-                            style={{ animationDelay: `${Math.min(idx * 15, 80)}ms` }}
+                            className={cn('flex gap-3', isUser ? 'justify-end' : 'justify-start')}
+                            style={{ animation: 'msg-in 260ms cubic-bezier(0.16,1,0.3,1) both', animationDelay: `${Math.min(idx * 12, 60)}ms` }}
                         >
-                            {/* AI avatar */}
+                            {/* AI avatar dot */}
                             {!isUser && (
                                 <div
-                                    className="mt-0.5 h-7 w-7 shrink-0 rounded-xl border border-primary/15 bg-primary/8 flex items-center justify-center"
+                                    className="mt-1 h-6 w-6 shrink-0 rounded-lg flex items-center justify-center"
+                                    style={{
+                                        background: 'hsl(var(--primary) / 0.08)',
+                                        border: '1px solid hsl(var(--primary) / 0.15)',
+                                    }}
                                     aria-hidden="true"
                                 >
                                     <Sparkles className="h-3 w-3 text-primary" />
                                 </div>
                             )}
 
-                            {/* Bubble + actions */}
-                            <div className={cn(
-                                'group flex flex-col gap-1',
-                                isUser ? 'items-end max-w-[75%]' : 'items-start max-w-[82%]'
-                            )}>
-                                {/* ── User bubble ── */}
+                            <div className={cn('group flex flex-col gap-1.5', isUser ? 'items-end max-w-[74%]' : 'items-start max-w-[80%]')}>
+                                {/* Bubble */}
                                 {isUser ? (
                                     <div
                                         role="note"
                                         aria-label="Your message"
-                                        className="rounded-2xl rounded-br-[6px] px-4 py-3 text-sm leading-relaxed bg-primary text-primary-foreground"
+                                        className="rounded-2xl rounded-br-[6px] px-4 py-3 text-[13.5px] leading-relaxed text-primary-foreground"
                                         style={{
-                                            boxShadow: '0 4px 20px hsl(var(--primary)/0.25), 0 1px 4px hsl(var(--primary)/0.15)',
+                                            background: 'hsl(var(--primary))',
+                                            boxShadow: '0 4px 18px hsl(var(--primary) / 0.22), 0 1px 4px hsl(var(--primary) / 0.12)',
                                         }}
                                     >
                                         <p className="whitespace-pre-wrap break-words">{displayContent}</p>
                                     </div>
                                 ) : (
-                                    /* ── AI bubble ── */
                                     <div
                                         role="article"
                                         aria-label="Copilot response"
-                                        className="rounded-2xl rounded-bl-[6px] px-4 py-3 text-sm leading-relaxed text-foreground"
+                                        className="rounded-2xl rounded-bl-[6px] px-4 py-3 text-[13.5px] leading-relaxed text-foreground"
                                         style={{
                                             background: 'hsl(var(--surface))',
-                                            border: '1px solid hsl(var(--border) / 0.5)',
-                                            boxShadow: '0 1px 8px hsl(222 25% 4% / 0.14)',
+                                            border: '1px solid hsl(var(--border) / 0.45)',
+                                            boxShadow: '0 1px 6px hsl(222 25% 4% / 0.12)',
                                         }}
                                     >
                                         <p className="whitespace-pre-wrap break-words">{displayContent}</p>
                                     </div>
                                 )}
 
-                                {/* Message actions — AI only, fade in on hover */}
+                                {/* Actions — AI only */}
                                 {!isUser && (
                                     <MessageActions
                                         messageId={msg.id}
@@ -182,18 +199,22 @@ export function ChatView({
                     )
                 })}
 
-                {/* Typing indicator */}
+                {/* Typing */}
                 {isTyping && (
-                    <div className="flex items-start gap-3 animate-[fade-in_0.2s_ease-out_both]" aria-live="polite">
-                        <div className="mt-0.5 h-7 w-7 shrink-0 rounded-xl border border-primary/15 bg-primary/8 flex items-center justify-center" aria-hidden="true">
+                    <div className="flex items-start gap-3" style={{ animation: 'fade-in 180ms ease-out both' }} aria-live="polite">
+                        <div
+                            className="mt-1 h-6 w-6 shrink-0 rounded-lg flex items-center justify-center"
+                            style={{ background: 'hsl(var(--primary) / 0.08)', border: '1px solid hsl(var(--primary) / 0.15)' }}
+                            aria-hidden="true"
+                        >
                             <Sparkles className="h-3 w-3 text-primary" />
                         </div>
                         <div
-                            className="rounded-2xl rounded-bl-[6px] px-4 py-3.5"
+                            className="rounded-2xl rounded-bl-[6px] px-4 py-3"
                             style={{
                                 background: 'hsl(var(--surface))',
-                                border: '1px solid hsl(var(--border) / 0.5)',
-                                boxShadow: '0 1px 8px hsl(222 25% 4% / 0.14)',
+                                border: '1px solid hsl(var(--border) / 0.45)',
+                                boxShadow: '0 1px 6px hsl(222 25% 4% / 0.12)',
                             }}
                         >
                             <TypingDots />
@@ -201,7 +222,7 @@ export function ChatView({
                     </div>
                 )}
 
-                <div ref={bottomRef} className="h-2" aria-hidden="true" />
+                <div ref={bottomRef} className="h-1" aria-hidden="true" />
             </div>
         </div>
     )
