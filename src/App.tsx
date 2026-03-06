@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react'
 import CopilotPage from '@/pages/CopilotPage'
 import SettingsPage from '@/pages/SettingsPage'
 import { ThemeProvider } from '@/context/ThemeContext'
+import { TooltipProvider } from '@/components/ui/tooltip'
 
 function PageTransition({ children }: { children: React.ReactNode }) {
     const location = useLocation()
@@ -12,7 +13,7 @@ function PageTransition({ children }: { children: React.ReactNode }) {
         const el = ref.current
         if (!el) return
         el.classList.remove('page-enter')
-        void el.offsetWidth  // reflow
+        void el.offsetWidth
         el.classList.add('page-enter')
     }, [location.key])
 
@@ -38,9 +39,11 @@ function AppRoutes() {
 export default function App() {
     return (
         <ThemeProvider>
-            <BrowserRouter>
-                <AppRoutes />
-            </BrowserRouter>
+            <TooltipProvider delayDuration={400} skipDelayDuration={150}>
+                <BrowserRouter>
+                    <AppRoutes />
+                </BrowserRouter>
+            </TooltipProvider>
         </ThemeProvider>
     )
 }

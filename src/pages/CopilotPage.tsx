@@ -1,10 +1,10 @@
 import { useState, useCallback, useEffect } from 'react'
-import { TooltipProvider } from '@/components/ui/tooltip'
 import { Sidebar } from '@/components/Sidebar'
 import { Topbar } from '@/components/Topbar'
 import { ChatView } from '@/components/ChatView'
 import { ChatInput } from '@/components/ChatInput'
 import { ReportModal } from '@/components/ReportModal'
+import type { ModelFlavor } from '@/components/ModelSelector'
 import type { Chat, Message } from '@/types'
 
 /* ── Demo responses ─────────────────────────────────────────────────────── */
@@ -37,6 +37,8 @@ export default function CopilotPage() {
     const [isTyping, setIsTyping] = useState(false)
     const [reportMsgId, setReportMsgId] = useState<string | null>(null)
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+    const [model, setModel] = useState<ModelFlavor>('smart')
+    const warnExternal = typeof localStorage !== 'undefined' ? localStorage.getItem('swp_ext_no_warn') !== '1' : true
 
     const activeChat = chats.find((c) => c.id === activeChatId) ?? null
     const messages = activeChat?.messages ?? []
@@ -134,46 +136,50 @@ export default function CopilotPage() {
     }, [handleNewChat])
 
     return (
-        <TooltipProvider>
-            <div className="h-full flex flex-col overflow-hidden bg-background" aria-label="SwordigoPlus Copilot">
-                <Topbar onToggleSidebar={() => setSidebarCollapsed((v) => !v)} sidebarCollapsed={sidebarCollapsed} />
+        <div className="h-full flex flex-col overflow-hidden bg-background" aria-label="SwordigoPlus Copilot">
+            <Topbar onToggleSidebar={() => setSidebarCollapsed((v) => !v)} sidebarCollapsed={sidebarCollapsed} />
 
-                <div className="flex flex-1 overflow-hidden">
-                    <Sidebar
-                        chats={chats}
-                        activeChatId={activeChatId}
-                        onSelectChat={setActiveChatId}
-                        onNewChat={handleNewChat}
-                        onDeleteChat={handleDeleteChat}
-                        isCollapsed={sidebarCollapsed}
+            <div className="flex flex-1 overflow-hidden">
+                <Sidebar
+                    chats={chats}
+                    activeChatId={activeChatId}
+                    onSelectChat={setActiveChatId}
+                    onNewChat={handleNewChat}
+                    onDeleteChat={handleDeleteChat}
+                    isCollapsed={sidebarCollapsed}
+                />
+
+                <main className="relative flex flex-col flex-1 overflow-hidden" aria-label="Chat">
+                    {/* Ambient blobs */}
+                    <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+                        <div className="absolute -top-1/3 right-0 h-[70vmax] w-[70vmax] rounded-full bg-primary/4 blur-[120px]" />
+                        <div className="absolute -bottom-1/3 left-0 h-[55vmax] w-[55vmax] rounded-full bg-primary/3 blur-[140px]" />
+                    </div>
+
+                    <ChatView
+                        messages={messages}
+                        isTyping={isTyping}
+                        onReport={(id) => setReportMsgId(id)}
+                        onRegen={handleRegen}
+                        onVariantChange={handleVariantChange}
+                        onSuggest={handleSend}
+                        warnExternalLinks={warnExternal}
                     />
 
-                    <main className="relative flex flex-col flex-1 overflow-hidden" aria-label="Chat">
-                        {/* Ambient blobs */}
-                        <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
-                            <div className="absolute -top-1/3 right-0 h-[70vmax] w-[70vmax] rounded-full bg-primary/4 blur-[120px] animate-blob-1" />
-                            <div className="absolute -bottom-1/3 left-0 h-[55vmax] w-[55vmax] rounded-full bg-primary/3 blur-[140px] animate-blob-2" />
-                        </div>
-
-                        <ChatView
-                            messages={messages}
-                            isTyping={isTyping}
-                            onReport={(id) => setReportMsgId(id)}
-                            onRegen={handleRegen}
-                            onVariantChange={handleVariantChange}
-                            onSuggest={handleSend}
-                        />
-
-                        <ChatInput onSend={handleSend} disabled={isTyping} />
-                    </main>
-                </div>
-
-                <ReportModal
-                    open={reportMsgId !== null}
-                    onClose={() => setReportMsgId(null)}
-                    onSubmit={() => setReportMsgId(null)}
-                />
+                    <ChatInput
+                        onSend={handleSend}
+                        disabled={isTyping}
+                        model={model}
+                        onModelChange={setModel}
+                    />
+                </main>
             </div>
-        </TooltipProvider>
+
+            <ReportModal
+                open={reportMsgId !== null}
+                onClose={() => setReportMsgId(null)}
+                onSubmit={() => setReportMsgId(null)}
+            />
+        </div>
     )
 }
