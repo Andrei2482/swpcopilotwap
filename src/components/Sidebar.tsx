@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, type PointerEvent, type MouseEvent } from 'react'
-import { Plus, MessageSquare, Trash2, Search, GripVertical, Sparkles } from 'lucide-react'
+import { Plus, MessageSquare, Trash2, Search, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
