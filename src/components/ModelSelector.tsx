@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import type { ComponentType } from 'react'
 import { Sparkles, Gauge, Code2, Paintbrush, Crosshair, ChevronDown, Check } from 'lucide-react'
 import {
     DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -13,7 +13,7 @@ interface ModelOption {
     label: string
     badge?: string
     desc: string
-    icon: React.ComponentType<{ className?: string }>
+    icon: ComponentType<{ className?: string }>
 }
 
 const MODELS: ModelOption[] = [

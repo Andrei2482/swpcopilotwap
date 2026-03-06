@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, Trash2, Download, Moon, Sun, Monitor, ShieldCheck, FilterX } from 'lucide-react'
+import { ArrowLeft, Trash2, Download, Moon, Sun, Monitor, ShieldCheck } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -42,7 +42,6 @@ function Section({ title, icon: Icon, children }: { title: string; icon?: typeof
                     background: 'hsl(var(--surface))',
                     border: '1px solid hsl(var(--border)/0.50)',
                     boxShadow: '0 1px 8px hsl(222 25% 4%/0.08)',
-                    divideColor: 'hsl(var(--border)/0.40)',
                 }}
             >
                 {children}
