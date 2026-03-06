@@ -19,7 +19,6 @@ interface TopbarProps {
 
 export function Topbar({ onToggleSidebar, sidebarCollapsed }: TopbarProps) {
     const navigate = useNavigate()
-    const [_open, setOpen] = useState(false)
 
     return (
         <header className="glass-topbar flex items-center justify-between h-14 px-4 shrink-0 z-10">
@@ -57,7 +56,7 @@ export function Topbar({ onToggleSidebar, sidebarCollapsed }: TopbarProps) {
             </div>
 
             {/* Right — profile avatar */}
-            <DropdownMenu onOpenChange={setOpen}>
+            <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <button
                         type="button"

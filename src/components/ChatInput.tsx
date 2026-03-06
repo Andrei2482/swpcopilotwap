@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from 'react'
-import { Send, ArrowUp } from 'lucide-react'
+import { ArrowUp } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface ChatInputProps {
@@ -29,7 +29,7 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
         }
     }
 
-    function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    function handleKeyDown(e: KeyboardEvent) {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault()
             handleSend()
